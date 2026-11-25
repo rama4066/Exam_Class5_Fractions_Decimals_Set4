@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class 5 Maths Exam – Fractions, Decimals & Directions</title>
+<style>
+:root{--blue:#2563eb;--green:#16a34a;--red:#dc2626;--ink:#1e293b;--muted:#64748b}
+*{box-sizing:border-box}
+body{font-family:Segoe UI,Tahoma,sans-serif;background:#f1f5f9;margin:0;padding:18px;color:var(--ink)}
+.container{max-width:1000px;margin:auto;background:#fff;padding:24px;border-radius:14px;box-shadow:0 5px 22px #0f172a12}
+.hidden{display:none!important}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0;padding-bottom:14px;margin-bottom:18px}
+.timer{font-size:20px;font-weight:800;color:#b91c1c;background:#fef2f2;padding:8px 15px;border-radius:8px}
+.main{display:flex;gap:24px}
+.question-box{flex:2;min-width:0}
+.palette{flex:1;min-width:210px;border-left:1px solid #e2e8f0;padding-left:20px;max-height:600px;overflow:auto}
+.palette-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.p-btn{padding:10px;border:1px solid #cbd5e1;background:white;border-radius:7px;font-weight:700;cursor:pointer}
+.p-btn.answered{background:#16a34a;color:white;border-color:#16a34a}
+.p-btn.active{outline:3px solid #bfdbfe;border-color:#2563eb}
+.visual-box{margin:16px 0;padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;text-align:center;min-height:90px}
+.visual-box svg{max-width:100%;height:auto}
+.option{display:block;margin:10px 0;padding:12px 14px;border:1px solid #dbe2ea;border-radius:9px;cursor:pointer;font-size:16px}
+.option:hover{background:#eff6ff;border-color:#93c5fd}
+.option input{margin-right:9px;accent-color:#2563eb}
+.controls{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:24px}
+button.nav{padding:10px 17px;border:0;border-radius:7px;cursor:pointer;font-size:15px;font-weight:700}
+.btn-secondary{background:#64748b;color:white}.btn-primary{background:#2563eb;color:white}.btn-success{background:#16a34a;color:white}
+input[type=text]{padding:12px;width:min(330px,100%);font-size:16px;border:1px solid #cbd5e1;border-radius:7px}
+.review-item{padding:12px 4px;border-bottom:1px solid #e2e8f0;line-height:1.5}
+#save-status{padding:12px;border-radius:7px;margin:14px 0;font-weight:700}
+.saving{background:#fef3c7;color:#92400e}.saved{background:#dcfce7;color:#166534}
+.small{color:var(--muted);font-size:14px}
+@media(max-width:720px){body{padding:8px}.container{padding:16px}.main{display:block}.palette{border-left:0;border-top:1px solid #e2e8f0;padding:15px 0 0;margin-top:24px;max-height:none}.palette-grid{grid-template-columns:repeat(5,1fr)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <section id="start-screen">
+    <h2>📐 Class 5 Mathematics – Online Assessment</h2>
+    <p><strong>Topics:</strong> Fractions, Decimals and Directions</p>
+    <p><strong>Level:</strong> Medium to Challenging &nbsp; | &nbsp; <strong>Time:</strong> 60 minutes &nbsp; | &nbsp; <strong>Questions:</strong> <span id="total-q-count"></span></p>
+    <p class="small">Choose one answer for each question. You can move between questions using the question palette. Switching browser tabs will trigger a warning.</p>
+    <p><input type="text" id="student-name" placeholder="Enter Student Full Name" autocomplete="name"></p>
+    <button class="nav btn-primary" onclick="startExam()">Start Exam</button>
+  </section>
+
+  <section id="exam-screen" class="hidden">
+    <div class="header">
+      <div><strong>Student:</strong> <span id="display-name"></span> &nbsp;|&nbsp; <strong>Tab warnings:</strong> <span id="warnings" style="color:#dc2626;font-weight:bold">0</span></div>
+      <div class="timer" id="timer">60:00</div>
+    </div>
+    <div class="main">
+      <div class="question-box">
+        <h3 id="q-title"></h3>
+        <div class="visual-box" id="visual-box"></div>
+        <div id="options-box"></div>
+        <div class="controls">
+          <button class="nav btn-secondary" onclick="prevQ()">Previous</button>
+          <button class="nav btn-primary" onclick="nextQ()">Save &amp; Next</button>
+          <button class="nav btn-success" onclick="submitExam()">Submit Exam</button>
+        </div>
+      </div>
+      <aside class="palette"><strong>Question Palette</strong><div class="palette-grid" id="palette-grid"></div><p class="small">Green = answered</p></aside>
+    </div>
+  </section>
+
+  <section id="result-screen" class="hidden">
+    <h2>🎉 Exam Completed</h2>
+    <div id="save-status" class="saving">Submitting results to teacher's sheet...</div>
+    <p><strong>Student:</strong> <span id="res-name"></span></p>
+    <p><strong>Score:</strong> <span id="res-score" style="font-size:20px;font-weight:800"></span></p>
+    <p><strong>Tab switches:</strong> <span id="res-warnings"></span></p>
+    <div id="review-box"></div>
+  </section>
+</div>
+
+<script>
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzDkbaGgHKmvMrwaE1juPKrWycMQbl5jX7w0TIN3f4zh69kFwOPlpjvA-Abp_o8iBa-/exec";
+
+const questions = [
+ {q:"1. Find the sum of 1/4 + 2/3.",options:["3/7","11/12","5/12","1 1/12"],answer:1,vis:{type:"fraction",parts:[{n:1,d:4,label:"1/4"},{n:2,d:3,label:"2/3"}]}},
+ {q:"2. A chocolate bar has 12 equal pieces. Aarav eats 5 pieces. What fraction is left?",options:["5/12","7/12","1/12","7/5"],answer:1,vis:{type:"fraction",parts:[{n:5,d:12,label:"Eaten: 5/12"},{n:7,d:12,label:"Left: 7/12"}]}},
+ {q:"3. Convert 3 4/7 into an improper fraction.",options:["21/7","24/7","25/7","27/7"],answer:2,vis:{type:"equation",text:"3 × 7 + 4 = 25",sub:"Write the answer over the original denominator 7"}},
+ {q:"4. Simplify the fraction 18/24.",options:["2/3","3/4","4/5","5/6"],answer:1,vis:{type:"equation",text:"18/24 ÷ 6/6",sub:"Divide the numerator and denominator by their HCF, 6"}},
+ {q:"5. Find 7/8 − 1/4.",options:["3/8","5/8","6/8","1/2"],answer:1,vis:{type:"equation",text:"7/8 − 2/8",sub:"Convert 1/4 into an equivalent fraction with denominator 8"}},
+ {q:"6. Which fraction is the smallest: 2/3, 3/5, 5/8, 7/10?",options:["2/3","3/5","5/8","7/10"],answer:1,vis:{type:"fraction",parts:[{n:2,d:3,label:"2/3"},{n:3,d:5,label:"3/5"},{n:5,d:8,label:"5/8"},{n:7,d:10,label:"7/10"}]}},
+ {q:"7. A water tank is 3/5 full. If its total capacity is 50 litres, how much water is in it?",options:["20 L","25 L","30 L","35 L"],answer:2,vis:{type:"fraction",parts:[{n:3,d:5,label:"3/5 of 50 litres"}]}},
+ {q:"8. Neha read 2/7 of a book on Monday and 3/7 on Tuesday. What fraction of the book is still unread?",options:["2/7","3/7","5/7","6/7"],answer:0,vis:{type:"fraction",parts:[{n:2,d:7,label:"Monday: 2/7"},{n:3,d:7,label:"Tuesday: 3/7"}]}},
+ {q:"9. Write 0.08 as a fraction in simplest form.",options:["8/10","8/100","2/25","8/1000"],answer:2,vis:{type:"decimal",number:"0.08",labels:["0 ones","0 tenths","8 hundredths"]}},
+ {q:"10. Calculate 36.48 + 7.9.",options:["43.38","44.38","44.28","45.38"],answer:1,vis:{type:"equation",text:"36.48 + 7.90",sub:"Align the decimal points before adding"}},
+ {q:"11. Subtract 9.875 from 20.",options:["10.125","11.125","10.225","11.225"],answer:0,vis:{type:"equation",text:"20.000 − 9.875",sub:"Write 20 as 20.000 to make subtraction easier"}},
+ {q:"12. Multiply 4.6 × 2.5.",options:["1.15","11.5","115","10.5"],answer:1,vis:{type:"equation",text:"4.6 × 2.5",sub:"Multiply as whole numbers, then place the decimal point"}},
+ {q:"13. Divide 7.2 by 0.8.",options:["0.9","8","9","90"],answer:2,vis:{type:"equation",text:"7.2 ÷ 0.8",sub:"Multiply both numbers by 10: 72 ÷ 8"}},
+ {q:"14. Arrange these decimals in descending order: 2.09, 2.9, 2.19, 2.099.",options:["2.9, 2.19, 2.099, 2.09","2.9, 2.099, 2.19, 2.09","2.09, 2.099, 2.19, 2.9","2.19, 2.9, 2.099, 2.09"],answer:0,vis:{type:"decimal",number:"2.900",labels:["Compare digits place by place"]}},
+ {q:"15. A shopkeeper has 12.5 kg of rice. He sells 3.75 kg in the morning and 2.5 kg in the evening. How much rice is left?",options:["5.25 kg","6.25 kg","7.25 kg","6.75 kg"],answer:1,vis:{type:"equation",text:"12.50 − 3.75 − 2.50",sub:"Subtract both quantities from the starting amount"}},
+ {q:"16. A notebook costs ₹18.75. What is the cost of 4 notebooks?",options:["₹65","₹70","₹75","₹80"],answer:2,vis:{type:"equation",text:"₹18.75 × 4",sub:"Multiply the cost of one notebook by 4"}},
+ {q:"17. Kiran is facing East. He turns left. Which direction is he facing?",options:["South","North","West","East"],answer:1,vis:{type:"compass",direction:"East",steps:["Left turn"]}},
+ {q:"18. A house is south of a temple. In which direction is the temple from the house?",options:["South","East","North","West"],answer:2,vis:{type:"map",text:"Temple ↑ House",sub:"The temple is directly north of the house"}},
+ {q:"19. Divya walks 6 km west and then 2 km north. In which direction is she from her starting point?",options:["North-East","South-West","North-West","South-East"],answer:2,vis:{type:"route",moves:["6 km West","2 km North"],end:"North-West"}},
+ {q:"20. The school is east of the hospital. The market is south of the school. In which direction is the market from the hospital?",options:["North-East","South-East","South-West","North-West"],answer:1,vis:{type:"map",text:"Hospital → School ↓ Market",sub:"The market is to the south-east of the hospital"}},
+ {q:"21. A girl faces North. She turns left and then turns around to face the opposite direction. Which direction is she facing?",options:["East","West","South","North"],answer:0,vis:{type:"compass",direction:"North",steps:["Left turn to West","Turn around to East"]}},
+ {q:"22. Ravi walks 3 km south, then 3 km east, and then 3 km north. Where is he compared with his starting point?",options:["3 km East","3 km West","3 km South","At the starting point"],answer:0,vis:{type:"route",moves:["3 km South","3 km East","3 km North"],end:"3 km East of start"}},
+ {q:"23. The bus stop is west of the post office. The bank is south of the post office. In which direction is the bus stop from the bank?",options:["North-West","South-West","North-East","South-East"],answer:0,vis:{type:"map",text:"Bus Stop ← Post Office ↓ Bank",sub:"The bus stop is north-west of the bank"}},
+ {q:"24. A cyclist travels 15.75 km on Saturday and 18.5 km on Sunday. How far does the cyclist travel altogether?",options:["33.25 km","34.25 km","34.75 km","35.25 km"],answer:0,vis:{type:"equation",text:"15.75 + 18.50",sub:"Add the two distances"}},
+ {q:"25. A 6.4 litre jug is used to fill cups that each hold 0.4 litre. How many cups can be filled?",options:["12","14","16","18"],answer:2,vis:{type:"equation",text:"6.4 ÷ 0.4",sub:"Multiply both numbers by 10: 64 ÷ 4"}}
+];
+
+document.getElementById("total-q-count").textContent=questions.length;
+let current=0,answers=Array(questions.length).fill(null),timeLeft=3600,timerId=null,warnings=0,active=false;
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderVisual(v){
+ if(!v)return "";
+ if(v.type==="fraction"){
+  return `<svg width="470" height="${v.parts.length*48+10}" viewBox="0 0 470 ${v.parts.length*48+10}">${v.parts.map((p,i)=>{let x=20,y=8+i*48,w=250/p.d;return `<text x="20" y="${y+13}" font-size="13" fill="#334155">${esc(p.label)}</text>${Array.from({length:p.d},(_,j)=>`<rect x="${20+j*w}" y="${y+19}" width="${w-2}" height="18" rx="2" fill="${j<p.n?'#60a5fa':'#e2e8f0'}"/>`).join("")}`}).join("")}</svg>`;
+ }
+ if(v.type==="equation")return `<div style="font-size:23px;font-weight:800;color:#1d4ed8;padding:8px">${esc(v.text)}</div><div class="small">${esc(v.sub||"")}</div>`;
+ if(v.type==="decimal")return `<div style="font-size:27px;font-weight:800;letter-spacing:5px;color:#1d4ed8">${esc(v.number)}</div><div class="small">${esc(v.labels.join(" • "))}</div>`;
+ if(v.type==="numberline")return `<div style="display:flex;justify-content:space-around;align-items:center;padding:12px">${v.labels.map((x,i)=>`<div><div style="height:12px;width:12px;border-radius:50%;background:#2563eb;margin:auto"></div><strong>${x}</strong></div>`).join("")}</div><div class="small">Compare each fraction using a common denominator or equivalent fractions.</div>`;
+ if(v.type==="compass")return `<svg width="240" height="175" viewBox="0 0 240 175"><circle cx="120" cy="88" r="65" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/><path d="M120 20 L112 38 L128 38 Z M120 156 L112 138 L128 138 Z M52 88 L70 80 L70 96 Z M188 88 L170 80 L170 96 Z" fill="#2563eb"/><text x="120" y="13" text-anchor="middle" font-weight="bold">N</text><text x="120" y="173" text-anchor="middle">S</text><text x="207" y="93">E</text><text x="25" y="93">W</text><text x="120" y="92" text-anchor="middle" font-size="12" font-weight="bold">${esc(v.direction)}</text></svg><div class="small">${v.steps.join(" → ")}</div>`;
+ if(v.type==="map")return `<div style="font-size:20px;font-weight:800;color:#1d4ed8;padding:10px">${esc(v.text)}</div><div class="small">${esc(v.sub)}</div><div style="font-size:24px">🧭</div>`;
+ if(v.type==="route")return `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px">${v.moves.map((m,i)=>`<span style="background:#dbeafe;padding:9px 12px;border-radius:8px;font-weight:700">${i+1}. ${esc(m)}</span>`).join("")}</div><div style="font-weight:800;color:#166534">Final position: ${esc(v.end)}</div>`;
+ return "";
+}
+function startExam(){
+ const name=document.getElementById("student-name").value.trim();if(!name){alert("Please enter your name.");return;}
+ document.getElementById("display-name").textContent=name;document.getElementById("start-screen").classList.add("hidden");document.getElementById("exam-screen").classList.remove("hidden");active=true;loadQuestion(0);
+ timerId=setInterval(()=>{timeLeft--;document.getElementById("timer").textContent=`${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,"0")}`;if(timeLeft<=0)submitExam();},1000);
+}
+function loadQuestion(i){current=i;const q=questions[i];document.getElementById("q-title").textContent=q.q;document.getElementById("visual-box").innerHTML=renderVisual(q.vis);document.getElementById("options-box").innerHTML=q.options.map((o,j)=>`<label class="option"><input type="radio" name="opt" ${answers[i]===j?"checked":""} onchange="selectOpt(${j})">${esc(o)}</label>`).join("");renderPalette();}
+function selectOpt(i){answers[current]=i;renderPalette();}
+function renderPalette(){document.getElementById("palette-grid").innerHTML=questions.map((q,i)=>`<button class="p-btn ${answers[i]!==null?"answered":""} ${i===current?"active":""}" onclick="loadQuestion(${i})">${i+1}</button>`).join("");}
+function nextQ(){if(current<questions.length-1)loadQuestion(current+1);}
+function prevQ(){if(current>0)loadQuestion(current-1);}
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&active){warnings++;document.getElementById("warnings").textContent=warnings;alert("Warning: Switching tabs is not allowed during the exam.");}});
+function submitExam(){
+ if(!active)return;if(!confirm("Are you sure you want to submit the exam?"))return;active=false;clearInterval(timerId);
+ const name=document.getElementById("student-name").value.trim();let score=0,selected=[];
+ let review="<h3>Answer Review</h3>";
+ questions.forEach((q,i)=>{const correct=answers[i]===q.answer;if(correct)score++;const chosen=answers[i]===null?"Unanswered":q.options[answers[i]];selected.push(`Q${i+1}: ${chosen}`);review+=`<div class="review-item"><strong>${esc(q.q)}</strong><br>Your answer: <span style="color:${correct?'#16a34a':'#dc2626'};font-weight:700">${esc(chosen)}</span> &nbsp;|&nbsp; Correct answer: <strong>${esc(q.options[q.answer])}</strong></div>`;});
+ document.getElementById("exam-screen").classList.add("hidden");document.getElementById("result-screen").classList.remove("hidden");document.getElementById("res-name").textContent=name;document.getElementById("res-score").textContent=`${score} / ${questions.length}`;document.getElementById("res-warnings").textContent=warnings;document.getElementById("review-box").innerHTML=review;
+ fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({studentName:name,score:score,totalQuestions:questions.length,warnings:warnings,answers:selected.join(" | ")})}).then(()=>{const s=document.getElementById("save-status");s.className="saved";s.textContent="Results submitted to teacher's sheet!";}).catch(()=>{document.getElementById("save-status").textContent="Unable to confirm sheet submission. Please take a screenshot of your score.";});
+}
+</script>
+</body>
+</html>
